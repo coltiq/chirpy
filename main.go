@@ -27,7 +27,7 @@ func NewServer() *http.Server {
 	mux.HandleFunc("GET /admin/metrics", apiCfg.MetricsHandler)
 	mux.HandleFunc("GET /api/reset", apiCfg.ResetMetricsHandler)
 
-	mux.HandleFunc("POST /api/validate_chirp", LenValidationHandler)
+	mux.HandleFunc("POST /api/validate_chirp", ValidateHandler)
 
 	srv := &http.Server{
 		Addr:    ":" + port,

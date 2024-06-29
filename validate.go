@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func LenValidationHandler(w http.ResponseWriter, r *http.Request) {
+func ValidateHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Body string `json:"body"`
 	}
