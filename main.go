@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 )
@@ -23,17 +22,6 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 
 func (cfg *apiConfig) ResetMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	cfg.fileserverHits = 0
-}
-
-func (cfg *apiConfig) MetricsHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(fmt.Sprintf(`<html>
-				<body>
-    				<h1>Welcome, Chirpy Admin</h1>
-    				<p>Chirpy has been visited %d times!</p>
-				</body>
-			</html>`, cfg.fileserverHits)))
 }
 
 func HealthHandler(w http.ResponseWriter, r *http.Request) {
