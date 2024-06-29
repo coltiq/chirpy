@@ -13,10 +13,6 @@ type apiConfig struct {
 	fileserverHits int
 }
 
-func (cfg *apiConfig) ResetMetricsHandler(w http.ResponseWriter, r *http.Request) {
-	cfg.fileserverHits = 0
-}
-
 func HealthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
