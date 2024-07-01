@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
+
+	"github.com/coltiq/chirpy/internal/database"
 )
 
 const (
@@ -13,8 +15,13 @@ type apiConfig struct {
 	fileserverHits int
 }
 
-func NewServer() *http.Server {
+type dbConfig struct {
+	db *database.DB
+}
+
+func NewServer(db *database.DB) *http.Server {
 	apiCfg := &apiConfig{}
+	dbCfg := &dbConfig{db: db}
 	mux := http.NewServeMux()
 
 	// Wrap Fileserver with Middleware to Track Metrics
@@ -27,7 +34,8 @@ func NewServer() *http.Server {
 	mux.HandleFunc("GET /admin/metrics", apiCfg.MetricsHandler)
 	mux.HandleFunc("GET /api/reset", apiCfg.ResetMetricsHandler)
 
-	mux.HandleFunc("POST /api/validate_chirp", ValidateHandler)
+	mux.HandleFunc("POST /api/chirps", dbCfg.ChirpPostHandler)
+	mux.HandleFunc("GET /api/chirps", dbCfg.ChirpGetHandler)
 
 	srv := &http.Server{
 		Addr:    ":" + port,
@@ -37,7 +45,12 @@ func NewServer() *http.Server {
 }
 
 func main() {
-	srv := NewServer()
+	db, err := database.NewDB("./database.json")
+	if err != nil {
+		log.Fatalf("Error initializing database", err)
+	}
+
+	srv := NewServer(db)
 
 	log.Printf("Starting server [:%s]...", port)
 	log.Fatal(srv.ListenAndServe())
