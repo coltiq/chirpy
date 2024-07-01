@@ -95,6 +95,12 @@ func (db *DB) loadDB() (DBStructure, error) {
 		return DBStructure{}, err
 	}
 
+	if len(bytes) == 0 {
+		return DBStructure{
+			Chirps: map[int]Chirp{},
+		}, nil
+	}
+
 	var data DBStructure
 	err = json.Unmarshal(bytes, &data)
 	if err != nil {
