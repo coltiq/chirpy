@@ -1,8 +1,10 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/coltiq/chirpy/internal/database"
 )
@@ -50,7 +52,20 @@ func NewServer(db *database.DB) *http.Server {
 }
 
 func main() {
-	db, err := database.NewDB("database.json")
+	databaseName := "database.json"
+	dbg := flag.Bool("debug", false, "Enable debug mode")
+	flag.Parse()
+	if *dbg {
+		log.Print("Debug mode enabled! Deleting database...")
+		err := os.Remove(databaseName)
+		if err != nil {
+			log.Fatalf("Error deleting database: %s", err)
+		}
+	} else {
+		log.Print("Running in normal mode.")
+	}
+
+	db, err := database.NewDB(databaseName)
 	if err != nil {
 		log.Fatalf("Error initializing database: %s", err)
 	}
