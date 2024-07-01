@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 )
@@ -28,37 +29,41 @@ func (d *dbConfig) ChirpPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	const maxChirpLength = 140
-
-	if len(params.Body) > maxChirpLength {
-		respondWithError(w, http.StatusBadRequest, "Chirp is too long")
+	cleaned, err := validateChirp(params.Body)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	cleaned := cleanChirp(params.Body)
 	chirp, err := d.db.CreateChirp(cleaned)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Chirp couldn't be created")
+		return
 	}
 
 	respondWithJSON(w, http.StatusCreated, chirp)
 }
 
-func cleanChirp(body string) string {
+func validateChirp(body string) (string, error) {
+	const maxChirpLength = 140
+	if len(body) > maxChirpLength {
+		return "", errors.New("chirp is too long")
+	}
 	badWords := map[string]struct{}{
 		"kerfuffle": {},
 		"sharbert":  {},
 		"fornax":    {},
 	}
+	return cleanChirp(body, badWords), nil
+}
 
+func cleanChirp(body string, badWords map[string]struct{}) string {
 	words := strings.Split(body, " ")
-
 	for i, word := range words {
 		loweredWord := strings.ToLower(word)
 		if _, ok := badWords[loweredWord]; ok {
 			words[i] = "****"
 		}
 	}
-
 	return strings.Join(words, " ")
 }
