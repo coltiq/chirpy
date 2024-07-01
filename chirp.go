@@ -4,15 +4,34 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"sort"
 	"strings"
 )
 
+type Chirp struct {
+	ID   int    `json:"id"`
+	Body string `json:"body"`
+}
+
 func (cfg *apiConfig) ChirpGetHandler(w http.ResponseWriter, r *http.Request) {
-	chirps, err := cfg.DB.GetChirps()
+	dbChirps, err := cfg.DB.GetChirps()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't get Chirps")
 		return
 	}
+
+	chirps := []Chirp{}
+	for _, dbChirp := range dbChirps {
+		chirps = append(chirps, Chirp{
+			ID:   dbChirp.Id,
+			Body: dbChirp.Body,
+		})
+	}
+
+	sort.Slice(chirps, func(i, j int) bool {
+		return chirps[i].ID < chirps[j].ID
+	})
+
 	respondWithJSON(w, http.StatusOK, chirps)
 }
 
