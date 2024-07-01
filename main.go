@@ -13,15 +13,15 @@ const (
 
 type apiConfig struct {
 	fileserverHits int
-}
-
-type dbConfig struct {
-	db *database.DB
+	DB             *database.DB
 }
 
 func NewServer(db *database.DB) *http.Server {
-	apiCfg := &apiConfig{}
-	dbCfg := &dbConfig{db: db}
+	apiCfg := &apiConfig{
+		fileserverHits: 0,
+		DB:             db,
+	}
+
 	mux := http.NewServeMux()
 
 	// Wrap Fileserver with Middleware to Track Metrics
@@ -34,8 +34,8 @@ func NewServer(db *database.DB) *http.Server {
 	mux.HandleFunc("GET /admin/metrics", apiCfg.MetricsHandler)
 	mux.HandleFunc("GET /api/reset", apiCfg.ResetMetricsHandler)
 
-	mux.HandleFunc("POST /api/chirps", dbCfg.ChirpPostHandler)
-	mux.HandleFunc("GET /api/chirps", dbCfg.ChirpGetHandler)
+	mux.HandleFunc("POST /api/chirps", apiCfg.ChirpPostHandler)
+	mux.HandleFunc("GET /api/chirps", apiCfg.ChirpGetHandler)
 
 	srv := &http.Server{
 		Addr:    ":" + port,
@@ -45,7 +45,7 @@ func NewServer(db *database.DB) *http.Server {
 }
 
 func main() {
-	db, err := database.NewDB("./database.json")
+	db, err := database.NewDB("database.json")
 	if err != nil {
 		log.Fatalf("Error initializing database: %s", err)
 	}

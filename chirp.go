@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-func (d *dbConfig) ChirpGetHandler(w http.ResponseWriter, r *http.Request) {
-	chirps, err := d.db.GetChirps()
+func (cfg *apiConfig) ChirpGetHandler(w http.ResponseWriter, r *http.Request) {
+	chirps, err := cfg.DB.GetChirps()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't get Chirps")
 		return
@@ -16,7 +16,7 @@ func (d *dbConfig) ChirpGetHandler(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, chirps)
 }
 
-func (d *dbConfig) ChirpPostHandler(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) ChirpPostHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Body string `json:"body"`
 	}
@@ -35,7 +35,7 @@ func (d *dbConfig) ChirpPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	chirp, err := d.db.CreateChirp(cleaned)
+	chirp, err := cfg.DB.CreateChirp(cleaned)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Chirp couldn't be created")
 		return
