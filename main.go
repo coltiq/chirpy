@@ -47,7 +47,7 @@ func NewServer(db *database.DB) *http.Server {
 func main() {
 	db, err := database.NewDB("./database.json")
 	if err != nil {
-		log.Fatalf("Error initializing database", err)
+		log.Fatalf("Error initializing database: %s", err)
 	}
 
 	srv := NewServer(db)
