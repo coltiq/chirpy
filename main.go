@@ -34,8 +34,13 @@ func NewServer(db *database.DB) *http.Server {
 	mux.HandleFunc("GET /admin/metrics", apiCfg.MetricsHandler)
 	mux.HandleFunc("GET /api/reset", apiCfg.ResetMetricsHandler)
 
-	mux.HandleFunc("POST /api/chirps", apiCfg.ChirpPostHandler)
-	mux.HandleFunc("GET /api/chirps", apiCfg.ChirpGetHandler)
+	// Create and Retrieve Chirps
+	mux.HandleFunc("POST /api/chirps", apiCfg.ChirpsPostHandler)
+	mux.HandleFunc("GET /api/chirps", apiCfg.ChirpsGetHandler)
+	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.ChirpsGetSingleHandler)
+
+	// Users
+	mux.HandleFunc("POST /api/users", apiCfg.UsersPostHandler)
 
 	srv := &http.Server{
 		Addr:    ":" + port,
