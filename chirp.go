@@ -6,13 +6,18 @@ import (
 	"strings"
 )
 
-func ValidateHandler(w http.ResponseWriter, r *http.Request) {
+func (d *dbConfig) ChirpGetHandler(w http.ResponseWriter, r *http.Request) {
+	chirps, err := d.db.GetChirps()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't get Chirps")
+		return
+	}
+	respondWithJSON(w, http.StatusOK, chirps)
+}
+
+func (d *dbConfig) ChirpPostHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Body string `json:"body"`
-	}
-
-	type returnVal struct {
-		CleanedBody string `json:"cleaned_body"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -31,10 +36,12 @@ func ValidateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cleaned := cleanChirp(params.Body)
+	chirp, err := d.db.CreateChirp(cleaned)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Chirp couldn't be created")
+	}
 
-	respondWithJSON(w, http.StatusOK, returnVal{
-		CleanedBody: cleaned,
-	})
+	respondWithJSON(w, http.StatusCreated, chirp)
 }
 
 func cleanChirp(body string) string {
