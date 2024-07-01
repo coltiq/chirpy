@@ -1,5 +1,5 @@
 run: build
-	@bin/out
+	@bin/out --debug
 
 build:
 	@go build -o bin/out
