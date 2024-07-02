@@ -4,8 +4,10 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/coltiq/chirpy/internal/database"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 const (
@@ -15,12 +17,14 @@ const (
 type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
+	jwtSecret      string
 }
 
 func NewServer(db *database.DB) *http.Server {
 	apiCfg := &apiConfig{
 		fileserverHits: 0,
 		DB:             db,
+		jwtSecret:      os.Getenv("JWT_SECRET"),
 	}
 
 	mux := http.NewServeMux()
@@ -43,6 +47,7 @@ func NewServer(db *database.DB) *http.Server {
 	// Users
 	mux.HandleFunc("POST /api/login", apiCfg.handlerLogin)
 	mux.HandleFunc("POST /api/users", apiCfg.handlerUsersCreate)
+	mux.HandleFunc("PUT /api/users", apiCfg.handlerUsersUpdate)
 
 	srv := &http.Server{
 		Addr:    ":" + port,
