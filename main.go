@@ -17,14 +17,14 @@ const (
 type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
-	jwtSecret      string
+	jwtSecret      []byte
 }
 
 func NewServer(db *database.DB) *http.Server {
 	apiCfg := &apiConfig{
 		fileserverHits: 0,
 		DB:             db,
-		jwtSecret:      os.Getenv("JWT_SECRET"),
+		jwtSecret:      []byte(os.Getenv("JWT_SECRET")),
 	}
 
 	mux := http.NewServeMux()
