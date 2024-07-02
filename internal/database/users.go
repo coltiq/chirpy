@@ -10,23 +10,22 @@ type User struct {
 
 var ErrAlreadyExists = errors.New("already exists")
 
-func (db *DB) CreateUser(email, password string) (User, error) {
+func (db *DB) CreateUser(email, hashedPassword string) (User, error) {
+	// Ensure Email is Unique
+	if _, err := db.GetUserByEmail(email); !errors.Is(err, ErrNotExist) {
+		return User{}, ErrAlreadyExists
+	}
+
 	dbStructure, err := db.loadDB()
 	if err != nil {
 		return User{}, err
-	}
-
-	for _, user := range dbStructure.Users {
-		if user.Email == email {
-			return User{}, errors.New("email already in database")
-		}
 	}
 
 	newID := len(dbStructure.Users) + 1
 	newUser := User{
 		ID:             newID,
 		Email:          email,
-		HashedPassword: string(password),
+		HashedPassword: hashedPassword,
 	}
 	dbStructure.Users[newID] = newUser
 
@@ -38,20 +37,31 @@ func (db *DB) CreateUser(email, password string) (User, error) {
 	return newUser, nil
 }
 
-func (db *DB) GetUsers() ([]User, error) {
+func (db *DB) GetUser(id int) (User, error) {
 	dbStructure, err := db.loadDB()
 	if err != nil {
-		return nil, err
+		return User{}, err
 	}
 
-	users := make([]User, 0, len(dbStructure.Users))
-	for _, user := range dbStructure.Users {
-		users = append(users, user)
+	user, ok := dbStructure.Users[id]
+	if !ok {
+		return User{}, ErrNotExist
 	}
 
-	return users, nil
+	return user, nil
 }
 
 func (db *DB) GetUserByEmail(email string) (User, error) {
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		return User{}, err
+	}
 
+	for _, user := range dbStructure.Users {
+		if user.Email == email {
+			return user, nil
+		}
+	}
+
+	return User{}, ErrNotExist
 }
