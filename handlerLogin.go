@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"golang.org/x/crypto/bcrypt"
+	"github.com/coltiq/chirpy/internal/auth"
 )
 
-func (cfg *apiConfig) LoginHandler(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Password string `json:"password"`
 		Email    string `json:"email"`
@@ -24,26 +24,22 @@ func (cfg *apiConfig) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := cfg.DB.GetUserByEmail(params.Email)
+	user, err := cfg.DB.GetUserByEmail(params.Email)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't get users")
 		return
 	}
 
-	for _, user := range dbUsers {
-		if user.Email == params.Email {
-			err := bcrypt.CompareHashAndPassword(user.Password, []byte(params.Password))
-			if err != nil {
-				respondWithError(w, http.StatusUnauthorized, "Password doesn't match")
-				return
-			}
-			respondWithJSON(w, http.StatusOK, User{
-				Id:    user.Id,
-				Email: user.Email,
-			})
-			return
-		}
+	err = auth.CheckPasswordHash(params.Password, user.HashedPassword)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Invalid password")
+		return
 	}
 
-	respondWithError(w, http.StatusInternalServerError, "Not able to find Email")
+	respondWithJSON(w, http.StatusOK, response{
+		User: User{
+			ID:    user.ID,
+			Email: user.Email,
+		},
+	})
 }
