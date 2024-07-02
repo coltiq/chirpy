@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -14,50 +12,7 @@ type Chirp struct {
 	Body string `json:"body"`
 }
 
-func (cfg *apiConfig) ChirpsGetHandler(w http.ResponseWriter, r *http.Request) {
-	dbChirps, err := cfg.DB.GetChirps()
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't get Chirps")
-		return
-	}
-
-	chirps := []Chirp{}
-	for _, dbChirp := range dbChirps {
-		chirps = append(chirps, Chirp{
-			ID:   dbChirp.Id,
-			Body: dbChirp.Body,
-		})
-	}
-
-	sort.Slice(chirps, func(i, j int) bool {
-		return chirps[i].ID < chirps[j].ID
-	})
-
-	respondWithJSON(w, http.StatusOK, chirps)
-}
-
-func (cfg *apiConfig) ChirpsGetSingleHandler(w http.ResponseWriter, r *http.Request) {
-	chirpID, err := strconv.Atoi(r.PathValue("chirpID"))
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't get ChirpID")
-	}
-
-	dbChirps, err := cfg.DB.GetChirps()
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't get Chirps")
-		return
-	}
-
-	if chirpID < 1 || chirpID > len(dbChirps) {
-		respondWithError(w, http.StatusNotFound, "ChirpID Not Found")
-		return
-	}
-
-	chirp := dbChirps[chirpID-1]
-	respondWithJSON(w, http.StatusOK, chirp)
-}
-
-func (cfg *apiConfig) ChirpsPostHandler(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Body string `json:"body"`
 	}
@@ -82,7 +37,10 @@ func (cfg *apiConfig) ChirpsPostHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, chirp)
+	respondWithJSON(w, http.StatusCreated, Chirp{
+		ID:   chirp.ID,
+		Body: chirp.Body,
+	})
 }
 
 func validateChirp(body string) (string, error) {
