@@ -42,6 +42,7 @@ func NewServer(db *database.DB) *http.Server {
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.ChirpsGetSingleHandler)
 
 	// Users
+	mux.HandleFunc("POST /api/login", apiCfg.LoginHandler)
 	mux.HandleFunc("POST /api/users", apiCfg.UsersPostHandler)
 
 	srv := &http.Server{

@@ -50,5 +50,16 @@ func (cfg *apiConfig) UsersPostHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) LoginHandler(w http.ResponseWriter, r *http.Request) {
+type parameters struct {
+		Password string `json:"password"`
+		Email    string `json:"email"`
+	}
 
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters")
+		return
+	}
 }
