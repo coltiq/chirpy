@@ -64,6 +64,12 @@ func (db *DB) CreateUser(password []byte, email string) (User, error) {
 		return User{}, err
 	}
 
+	for _, user := range dbStructure.Users {
+		if user.Email == email {
+			return User{}, errors.New("email already in database")
+		}
+	}
+
 	newID := len(dbStructure.Users) + 1
 	newUser := User{
 		Id:       newID,
