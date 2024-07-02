@@ -4,7 +4,6 @@ import (
 	"flag"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/coltiq/chirpy/internal/database"
 )
@@ -37,13 +36,13 @@ func NewServer(db *database.DB) *http.Server {
 	mux.HandleFunc("GET /api/reset", apiCfg.ResetMetricsHandler)
 
 	// Create and Retrieve Chirps
-	mux.HandleFunc("POST /api/chirps", apiCfg.ChirpsPostHandler)
-	mux.HandleFunc("GET /api/chirps", apiCfg.ChirpsGetHandler)
-	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.ChirpsGetSingleHandler)
+	mux.HandleFunc("POST /api/chirps", apiCfg.handlerChirpsCreate)
+	mux.HandleFunc("GET /api/chirps", apiCfg.handlerChirpsRetrieve)
+	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerChirpsGet)
 
 	// Users
-	mux.HandleFunc("POST /api/login", apiCfg.LoginHandler)
-	mux.HandleFunc("POST /api/users", apiCfg.UsersPostHandler)
+	mux.HandleFunc("POST /api/login", apiCfg.handlerLogin)
+	mux.HandleFunc("POST /api/users", apiCfg.handlerUsersCreate)
 
 	srv := &http.Server{
 		Addr:    ":" + port,
@@ -54,21 +53,22 @@ func NewServer(db *database.DB) *http.Server {
 
 func main() {
 	databaseName := "database.json"
+
+	db, err := database.NewDB(databaseName)
+	if err != nil {
+		log.Fatalf("Error initializing database: %s", err)
+	}
+
 	dbg := flag.Bool("debug", false, "Enable debug mode")
 	flag.Parse()
-	if *dbg {
+	if dbg != nil && *dbg {
 		log.Print("Debug mode enabled! Deleting database...")
-		err := os.Remove(databaseName)
+		err := db.ResetDB()
 		if err != nil {
 			log.Fatalf("Error deleting database: %s", err)
 		}
 	} else {
 		log.Print("Running in normal mode.")
-	}
-
-	db, err := database.NewDB(databaseName)
-	if err != nil {
-		log.Fatalf("Error initializing database: %s", err)
 	}
 
 	srv := NewServer(db)
