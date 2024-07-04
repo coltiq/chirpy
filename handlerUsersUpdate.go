@@ -2,13 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/coltiq/chirpy/internal/auth"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 func (cfg *apiConfig) handlerUsersUpdate(w http.ResponseWriter, r *http.Request) {
@@ -34,49 +31,32 @@ func (cfg *apiConfig) handlerUsersUpdate(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		respondWithError(w, http.StatusUnauthorized, "Authorization header is missing")
-		return
-	}
-	userToken := strings.TrimPrefix(authHeader, "Bearer ")
-
-	token, err := jwt.ParseWithClaims(userToken, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
-		}
-		return cfg.jwtSecret, nil
-	})
+	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
+		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT")
 		return
 	}
 
-	var userID int
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		if id, ok := claims["sub"].(string); ok {
-			userID, err = strconv.Atoi(id)
-			if err != nil {
-				respondWithError(w, http.StatusUnauthorized, "Unable to get user id")
-				return
-			}
-		} else {
-			respondWithError(w, http.StatusUnauthorized, "Invalid token claims")
-			return
-		}
-	} else {
-		respondWithError(w, http.StatusUnauthorized, "Invalid or expired token")
+	subject, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT")
 		return
 	}
 
-	user, err := cfg.DB.UpdateUser(userID, params.Email, hashedPassword)
+	userIDint, err := strconv.Atoi(subject)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't parse user ID")
+		return
+	}
+
+	user, err := cfg.DB.UpdateUser(userIDint, params.Email, hashedPassword)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't update user")
 	}
 
 	respondWithJSON(w, http.StatusOK, response{
 		User: User{
-			ID:    userID,
+			ID:    user.ID,
 			Email: user.Email,
 		},
 	})
