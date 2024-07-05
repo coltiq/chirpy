@@ -27,19 +27,38 @@ func (cfg *apiConfig) handlerChirpsGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) handlerChirpsRetrieve(w http.ResponseWriter, r *http.Request) {
+	authorID := r.URL.Query().Get("author_id")
+	chirps := []Chirp{}
+
 	dbChirps, err := cfg.DB.GetChirps()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't get Chirps")
 		return
 	}
 
-	chirps := []Chirp{}
-	for _, dbChirp := range dbChirps {
-		chirps = append(chirps, Chirp{
-			ID:       dbChirp.ID,
-			AuthorID: dbChirp.AuthorID,
-			Body:     dbChirp.Body,
-		})
+	if authorID == "" {
+		for _, dbChirp := range dbChirps {
+			chirps = append(chirps, Chirp{
+				ID:       dbChirp.ID,
+				AuthorID: dbChirp.AuthorID,
+				Body:     dbChirp.Body,
+			})
+		}
+	} else {
+		authorIDint, err := strconv.Atoi(authorID)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Invalid author ID")
+			return
+		}
+		for _, dbChirp := range dbChirps {
+			if dbChirp.AuthorID == authorIDint {
+				chirps = append(chirps, Chirp{
+					ID:       dbChirp.ID,
+					AuthorID: dbChirp.AuthorID,
+					Body:     dbChirp.Body,
+				})
+			}
+		}
 	}
 
 	sort.Slice(chirps, func(i, j int) bool {
