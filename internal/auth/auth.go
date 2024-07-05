@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"net/http"
 	"strconv"
@@ -77,4 +79,16 @@ func ValidateJWT(tokenString, tokenSecret string) (string, error) {
 	}
 
 	return userIDstring, nil
+}
+
+func MakeRefreshToken() (string, error) {
+
+	randomData := make([]byte, 32)
+	_, err := rand.Read(randomData)
+	if err != nil {
+		return "", err
+	}
+	refresh := hex.EncodeToString(randomData)
+
+	return refresh, nil
 }
