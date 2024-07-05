@@ -28,6 +28,7 @@ func (cfg *apiConfig) handlerChirpsGet(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *apiConfig) handlerChirpsRetrieve(w http.ResponseWriter, r *http.Request) {
 	authorID := r.URL.Query().Get("author_id")
+	sortType := r.URL.Query().Get("sort")
 	chirps := []Chirp{}
 
 	dbChirps, err := cfg.DB.GetChirps()
@@ -62,6 +63,9 @@ func (cfg *apiConfig) handlerChirpsRetrieve(w http.ResponseWriter, r *http.Reque
 	}
 
 	sort.Slice(chirps, func(i, j int) bool {
+		if sortType == "desc" {
+			return chirps[i].ID > chirps[j].ID
+		}
 		return chirps[i].ID < chirps[j].ID
 	})
 
