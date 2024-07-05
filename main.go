@@ -52,6 +52,9 @@ func NewServer(db *database.DB) *http.Server {
 	mux.HandleFunc("POST /api/refresh", apiCfg.handlerRefresh)
 	mux.HandleFunc("POST /api/revoke", apiCfg.handlerRevoke)
 
+	// Polka Webhook
+	mux.HandleFunc("POST /api/polka/webhooks", apiCfg.handlerPolkaWebhook)
+
 	srv := &http.Server{
 		Addr:    ":" + port,
 		Handler: mux,
